@@ -121,7 +121,7 @@ const amountLeftToFeed = computed(() => {
 
 const feedAmountNeeded = computed(() => {
   if (dailyFeedRequirementInMl.value !== null) {
-    return Math.round(dailyFeedRequirementInMl.value);
+    return Math.round(dailyFeedRequirementInMl.value - amountFedSinceMidnight.value);
   }
   return null;
 });
