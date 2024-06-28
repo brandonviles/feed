@@ -1,71 +1,166 @@
 <template>
   <div id="app">
     <h1>Baby Feeding Calculator</h1>
-    <form @submit.prevent="calculateFeed">
+    <div>
       <div>
-        <label for="latestFeedTime">Latest Feed Time:</label>
-        <input type="datetime-local" v-model="latestFeedTime" required />
+        <label for="babyName">Baby Name:</label>
+        <input type="text" v-model="newBabyName" />
       </div>
       <div>
         <label for="babyWeight">Baby Weight (g):</label>
-        <input type="number" v-model="babyWeight" step="1" required />
+        <input type="number" v-model="newBabyWeight" step="1" />
       </div>
       <div>
-        <label for="amountFedSoFar">Amount Fed Since Midnight (ml):</label>
-        <input type="number" v-model="amountFedSinceMidnight" step="0.01" required />
+        <button @click="addBaby">Add Baby</button>
       </div>
-      <button type="submit">Calculate</button>
-    </form>
-    <div v-if="feedAmount !== null">
-      <h2>Feed Amount Needed for the Rest of the Day: {{ feedAmount }} ml</h2>
     </div>
-    <div v-if="amountLeftToFeed !== null">
-      <h2>Feed Amount Needed Up to Now: {{ amountLeftToFeed }} ml</h2>
+    <div v-if="babies.length > 0">
+      <label for="selectedBaby">Select Baby:</label>
+      <select v-model="selectedBabyIndex">
+        <option v-for="(baby, index) in babies" :key="index" :value="index">{{ baby.name }}</option>
+      </select>
+    </div>
+    <div v-if="selectedBaby !== null">
+      <h2>{{ selectedBaby.name }}</h2>
+      <div>
+        <label for="updatedBabyWeight">Update Baby Weight (g):</label>
+        <input type="number" v-model="updatedBabyWeight" step="1" @change="updateBabyWeight" />
+      </div>
+      <div>
+        <label for="feedAmount">Amount Fed (ml):</label>
+        <input type="number" v-model="feedAmountInput" step="0.01" />
+        <button @click="logFeed">Log Feed</button>
+      </div>
+      <div v-if="feedAmountNeeded !== null">
+        <h2>Feed Amount Needed for the Rest of the Day: {{ feedAmountNeeded }} ml</h2>
+      </div>
+      <div v-if="amountLeftToFeed !== null">
+        <h2>Feed Amount Needed Up to Now: {{ amountLeftToFeed }} ml</h2>
+      </div>
+      <div v-if="feedsSinceMidnight.length > 0">
+        <h2>Feed Log Since Midnight:</h2>
+        <ul>
+          <li v-for="(feed, index) in feedsSinceMidnight" :key="feed.timestamp">
+            {{ feed.amount }} ml at {{ new Date(feed.timestamp).toLocaleTimeString() }}
+            <button @click="deleteFeed(index)">Delete</button>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 
-const latestFeedTime = ref(null);
-const babyWeight = ref(null);
-const amountFedSinceMidnight = ref(null);
-const feedAmount = ref(null);
-const amountLeftToFeed = ref(null);
+const newBabyName = ref('');
+const newBabyWeight = ref(null);
+const feedAmountInput = ref(null);
+const selectedBabyIndex = ref(null);
+const updatedBabyWeight = ref(null);
 
-const calculateFeed = () => {
-  const babyWeightInGrams = parseFloat(babyWeight.value);
-  const amountFedSinceMidnightValue = parseFloat(amountFedSinceMidnight.value);
+const babies = ref(JSON.parse(localStorage.getItem('babies')) || []);
 
-  // Convert baby weight to kilograms
-  const babyWeightInKg = babyWeightInGrams / 1000;
+const selectedBaby = computed(() => {
+  if (selectedBabyIndex.value !== null && babies.value.length > 0) {
+    return babies.value[selectedBabyIndex.value];
+  }
+  return null;
+});
 
-  // Assuming the baby needs 120 calories per kg of body weight per day
-  const dailyCalorieRequirement = 120 * babyWeightInKg;
+watch(selectedBabyIndex, () => {
+  if (selectedBaby.value) {
+    updatedBabyWeight.value = selectedBaby.value.weight;
+  }
+});
 
-  // Convert daily calorie requirement to ounces (20 calories per ounce)
-  const dailyFeedRequirementInOunces = dailyCalorieRequirement / 20;
+const dailyFeedRequirementInMl = computed(() => {
+  if (selectedBaby.value !== null && selectedBaby.value.weight) {
+    const babyWeightInKg = selectedBaby.value.weight / 1000;
+    const dailyCalorieRequirement = 120 * babyWeightInKg;
+    const dailyFeedRequirementInOunces = dailyCalorieRequirement / 20;
+    return Math.round(dailyFeedRequirementInOunces * 29.5735);
+  }
+  return null;
+});
 
-  // Convert ounces to milliliters
-  const dailyFeedRequirementInMl = dailyFeedRequirementInOunces * 29.5735;
+const feedRequirementUpToNow = computed(() => {
+  if (dailyFeedRequirementInMl.value !== null && selectedBaby.value !== null) {
+    const currentTime = new Date();
+    const midnight = new Date(currentTime);
+    midnight.setHours(0, 0, 0, 0);
+    const timeElapsedSinceMidnightInHours = (currentTime - midnight) / (1000 * 60 * 60);
+    const hourlyFeedRequirement = dailyFeedRequirementInMl.value / 24;
+    return Math.round(hourlyFeedRequirement * timeElapsedSinceMidnightInHours);
+  }
+  return null;
+});
 
-  // Calculate the time elapsed since midnight in hours
-  const currentTime = new Date();
-  const midnight = new Date(currentTime);
-  midnight.setHours(0, 0, 0, 0);
-  const timeElapsedSinceMidnightInHours = (currentTime - midnight) / (1000 * 60 * 60);
+const feedsSinceMidnight = computed(() => {
+  if (selectedBaby.value !== null) {
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+    return selectedBaby.value.feeds.filter(feed => new Date(feed.timestamp) >= midnight);
+  }
+  return [];
+});
 
-  // Calculate the portion of the daily requirement that should have been fed up to now
-  const hourlyFeedRequirement = dailyFeedRequirementInMl / 24;
-  const feedRequirementUpToNow = hourlyFeedRequirement * timeElapsedSinceMidnightInHours;
+const amountFedSinceMidnight = computed(() => {
+  if (feedsSinceMidnight.value.length > 0) {
+    return feedsSinceMidnight.value.reduce((total, feed) => total + parseFloat(feed.amount), 0);
+  }
+  return 0;
+});
 
-  // Calculate the amount left to feed up to now and round to the nearest ml
-  amountLeftToFeed.value = Math.round(feedRequirementUpToNow - amountFedSinceMidnightValue);
+const amountLeftToFeed = computed(() => {
+  if (feedRequirementUpToNow.value !== null) {
+    return Math.round(feedRequirementUpToNow.value - amountFedSinceMidnight.value);
+  }
+  return null;
+});
 
-  // Calculate the feed amount needed for the rest of the day and round to the nearest ml
-  feedAmount.value = Math.round(dailyFeedRequirementInMl - amountFedSinceMidnightValue);
+const feedAmountNeeded = computed(() => {
+  if (dailyFeedRequirementInMl.value !== null) {
+    return Math.round(dailyFeedRequirementInMl.value);
+  }
+  return null;
+});
+
+const addBaby = () => {
+  if (newBabyName.value && newBabyWeight.value) {
+    babies.value.push({ name: newBabyName.value, weight: newBabyWeight.value, feeds: [] });
+    localStorage.setItem('babies', JSON.stringify(babies.value));
+    newBabyName.value = '';
+    newBabyWeight.value = null;
+    selectedBabyIndex.value = babies.value.length - 1;
+  }
 };
+
+const updateBabyWeight = () => {
+  if (selectedBaby.value !== null && updatedBabyWeight.value) {
+    selectedBaby.value.weight = updatedBabyWeight.value;
+    localStorage.setItem('babies', JSON.stringify(babies.value));
+  }
+};
+
+const logFeed = () => {
+  if (selectedBaby.value !== null && feedAmountInput.value) {
+    selectedBaby.value.feeds.push({ amount: feedAmountInput.value, timestamp: Date.now() });
+    localStorage.setItem('babies', JSON.stringify(babies.value));
+    feedAmountInput.value = null;
+  }
+};
+
+const deleteFeed = (index) => {
+  if (selectedBaby.value !== null) {
+    selectedBaby.value.feeds.splice(index, 1);
+    localStorage.setItem('babies', JSON.stringify(babies.value));
+  }
+};
+
+watch(babies, (newBabies) => {
+  localStorage.setItem('babies', JSON.stringify(newBabies));
+});
 </script>
 
 <style scoped>
@@ -77,12 +172,8 @@ const calculateFeed = () => {
   margin-top: 60px;
 }
 
-form {
+div {
   margin-bottom: 20px;
-}
-
-form div {
-  margin-bottom: 10px;
 }
 
 label {
@@ -90,7 +181,7 @@ label {
   margin-bottom: 5px;
 }
 
-input {
+input, select {
   padding: 5px;
   width: 100%;
   max-width: 300px;
@@ -103,9 +194,20 @@ button {
   color: white;
   border: none;
   cursor: pointer;
+  margin-left: 10px;
 }
 
 button:hover {
   background-color: #369c77;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  text-align: left;
+  margin-bottom: 10px;
 }
 </style>
