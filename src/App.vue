@@ -51,116 +51,148 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue'
+import axios from 'axios'
 
-const newBabyName = ref('');
-const newBabyWeight = ref(null);
-const feedAmountInput = ref(null);
-const selectedBabyIndex = ref(null);
-const updatedBabyWeight = ref(null);
+const newBabyName = ref('')
+const newBabyWeight = ref(null)
+const feedAmountInput = ref(null)
+const selectedBabyIndex = ref(null)
+const updatedBabyWeight = ref(null)
 
-const babies = ref(JSON.parse(localStorage.getItem('babies')) || []);
+const babies = ref([])
 
 const selectedBaby = computed(() => {
   if (selectedBabyIndex.value !== null && babies.value.length > 0) {
-    return babies.value[selectedBabyIndex.value];
+    return babies.value[selectedBabyIndex.value]
   }
-  return null;
-});
+  return null
+})
 
 watch(selectedBabyIndex, () => {
   if (selectedBaby.value) {
-    updatedBabyWeight.value = selectedBaby.value.weight;
+    updatedBabyWeight.value = selectedBaby.value.weight
   }
-});
+})
 
 const dailyFeedRequirementInMl = computed(() => {
   if (selectedBaby.value !== null && selectedBaby.value.weight) {
-    const babyWeightInKg = selectedBaby.value.weight / 1000;
-    const dailyCalorieRequirement = 120 * babyWeightInKg;
-    const dailyFeedRequirementInOunces = dailyCalorieRequirement / 20;
-    return Math.round(dailyFeedRequirementInOunces * 29.5735);
+    const babyWeightInKg = selectedBaby.value.weight / 1000
+    const dailyCalorieRequirement = 120 * babyWeightInKg
+    const dailyFeedRequirementInOunces = dailyCalorieRequirement / 20
+    return Math.round(dailyFeedRequirementInOunces * 29.5735)
   }
-  return null;
-});
+  return null
+})
 
 const feedRequirementUpToNow = computed(() => {
   if (dailyFeedRequirementInMl.value !== null && selectedBaby.value !== null) {
-    const currentTime = new Date();
-    const midnight = new Date(currentTime);
-    midnight.setHours(0, 0, 0, 0);
-    const timeElapsedSinceMidnightInHours = (currentTime - midnight) / (1000 * 60 * 60);
-    const hourlyFeedRequirement = dailyFeedRequirementInMl.value / 24;
-    return Math.round(hourlyFeedRequirement * timeElapsedSinceMidnightInHours);
+    const currentTime = new Date()
+    const midnight = new Date(currentTime)
+    midnight.setHours(0, 0, 0, 0)
+    const timeElapsedSinceMidnightInHours = (currentTime - midnight) / (1000 * 60 * 60)
+    const hourlyFeedRequirement = dailyFeedRequirementInMl.value / 24
+    return Math.round(hourlyFeedRequirement * timeElapsedSinceMidnightInHours)
   }
-  return null;
-});
+  return null
+})
 
 const feedsSinceMidnight = computed(() => {
   if (selectedBaby.value !== null) {
-    const midnight = new Date();
-    midnight.setHours(0, 0, 0, 0);
-    return selectedBaby.value.feeds.filter(feed => new Date(feed.timestamp) >= midnight);
+    const midnight = new Date()
+    midnight.setHours(0, 0, 0, 0)
+    return selectedBaby.value.feeds.filter((feed) => new Date(feed.timestamp) >= midnight)
   }
-  return [];
-});
+  return []
+})
 
 const amountFedSinceMidnight = computed(() => {
   if (feedsSinceMidnight.value.length > 0) {
-    return feedsSinceMidnight.value.reduce((total, feed) => total + parseFloat(feed.amount), 0);
+    return feedsSinceMidnight.value.reduce((total, feed) => total + parseFloat(feed.amount), 0)
   }
-  return 0;
-});
+  return 0
+})
 
 const amountLeftToFeed = computed(() => {
   if (feedRequirementUpToNow.value !== null) {
-    return Math.round(feedRequirementUpToNow.value - amountFedSinceMidnight.value);
+    return Math.round(feedRequirementUpToNow.value - amountFedSinceMidnight.value)
   }
-  return null;
-});
+  return null
+})
 
 const feedAmountNeeded = computed(() => {
   if (dailyFeedRequirementInMl.value !== null) {
-    return Math.round(dailyFeedRequirementInMl.value - amountFedSinceMidnight.value);
+    return Math.round(dailyFeedRequirementInMl.value)
   }
-  return null;
-});
+  return null
+})
 
-const addBaby = () => {
+const loadBabies = async () => {
+  try {
+    const response = await axios.get('https://baby-feeding-tracker.onrender.com/api/babies')
+    babies.value = response.data.babies
+  } catch (error) {
+    console.error('Error loading babies:', error)
+  }
+}
+
+onMounted(loadBabies)
+
+const addBaby = async () => {
   if (newBabyName.value && newBabyWeight.value) {
-    babies.value.push({ name: newBabyName.value, weight: newBabyWeight.value, feeds: [] });
-    localStorage.setItem('babies', JSON.stringify(babies.value));
-    newBabyName.value = '';
-    newBabyWeight.value = null;
-    selectedBabyIndex.value = babies.value.length - 1;
+    const baby = { name: newBabyName.value, weight: newBabyWeight.value, feeds: [] }
+    try {
+      await axios.post('https://baby-feeding-tracker.onrender.com/api/babies', baby)
+      await loadBabies()
+      newBabyName.value = ''
+      newBabyWeight.value = null
+      selectedBabyIndex.value = babies.value.length - 1
+    } catch (error) {
+      console.error('Error adding baby:', error)
+    }
   }
-};
+}
 
-const updateBabyWeight = () => {
+const updateBabyWeight = async () => {
   if (selectedBaby.value !== null && updatedBabyWeight.value) {
-    selectedBaby.value.weight = updatedBabyWeight.value;
-    localStorage.setItem('babies', JSON.stringify(babies.value));
+    selectedBaby.value.weight = updatedBabyWeight.value
+    try {
+      await axios.post('https://baby-feeding-tracker.onrender.com//api/babies', selectedBaby.value)
+      await loadBabies()
+    } catch (error) {
+      console.error('Error updating baby weight:', error)
+    }
   }
-};
+}
 
-const logFeed = () => {
+const logFeed = async () => {
   if (selectedBaby.value !== null && feedAmountInput.value) {
-    selectedBaby.value.feeds.push({ amount: feedAmountInput.value, timestamp: Date.now() });
-    localStorage.setItem('babies', JSON.stringify(babies.value));
-    feedAmountInput.value = null;
+    selectedBaby.value.feeds.push({ amount: feedAmountInput.value, timestamp: Date.now() })
+    try {
+      await axios.post('https://baby-feeding-tracker.onrender.com/api/babies', selectedBaby.value)
+      await loadBabies()
+      feedAmountInput.value = null
+    } catch (error) {
+      console.error('Error logging feed:', error)
+    }
   }
-};
+}
 
-const deleteFeed = (index) => {
+const deleteFeed = async (index) => {
   if (selectedBaby.value !== null) {
-    selectedBaby.value.feeds.splice(index, 1);
-    localStorage.setItem('babies', JSON.stringify(babies.value));
+    selectedBaby.value.feeds.splice(index, 1)
+    try {
+      await axios.post('https://baby-feeding-tracker.onrender.com/api/babies', selectedBaby.value)
+      await loadBabies()
+    } catch (error) {
+      console.error('Error deleting feed:', error)
+    }
   }
-};
+}
 
 watch(babies, (newBabies) => {
-  localStorage.setItem('babies', JSON.stringify(newBabies));
-});
+  localStorage.setItem('babies', JSON.stringify(newBabies))
+})
 </script>
 
 <style scoped>
@@ -181,7 +213,8 @@ label {
   margin-bottom: 5px;
 }
 
-input, select {
+input,
+select {
   padding: 5px;
   width: 100%;
   max-width: 300px;
