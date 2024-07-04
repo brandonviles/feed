@@ -162,7 +162,7 @@ const deleteSelectedBaby = async () => {
 
 const totalDailyRequirement = computed(() => {
   if (selectedBaby.value) {
-    return Math.round((selectedBaby.value.weight / 1000) * 120 * (1 / 0.033814))
+    return Math.round(((selectedBaby.value.weight / 1000) * 120) / (1 / 0.033814))
   }
   return 0
 })
