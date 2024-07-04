@@ -10,7 +10,7 @@
     </div>
     <div v-if="babies.length > 0">
       <label for="selectedBaby">Select Baby:</label>
-      <select v-model="selectedBabyIndex">
+      <select v-model="selectedBabyIndex" @change="fetchFeeds">
         <option v-for="(baby, index) in babies" :key="index" :value="index">{{ baby.name }}</option>
       </select>
       <button @click="deleteSelectedBaby">Delete Selected Baby</button>
@@ -34,7 +34,7 @@
       <div>
         <h3>Feeds</h3>
         <ul>
-          <li v-for="(feed, index) in selectedBaby.feeds" :key="index">
+          <li v-for="(feed, index) in feeds" :key="index">
             {{ new Date(feed.timestamp).toLocaleString() }}: {{ feed.amount }} ml
             <button @click="deleteFeed(feed.id)">Delete</button>
           </li>
@@ -59,6 +59,7 @@ const newBabyWeight = ref(null)
 const selectedBabyIndex = ref(null)
 const feedAmountInput = ref(null)
 const babies = ref([])
+const feeds = ref([])
 
 const serverUrl = 'https://baby-feeding-tracker.onrender.com/api'
 
@@ -72,14 +73,16 @@ const fetchBabies = async () => {
   }
 }
 
-const fetchFeeds = async (babyId) => {
-  try {
-    const response = await axios.get(`${serverUrl}/feeds/${babyId}`)
-    console.log('Fetched feeds:', response.data) // Debugging log
-    return response.data
-  } catch (error) {
-    console.error('Error fetching feeds:', error)
-    return []
+const fetchFeeds = async () => {
+  if (selectedBaby.value) {
+    try {
+      const response = await axios.get(`${serverUrl}/feeds/${selectedBaby.value.id}`)
+      console.log('Fetched feeds:', response.data) // Debugging log
+      feeds.value = response.data
+    } catch (error) {
+      console.error('Error fetching feeds:', error)
+      feeds.value = []
+    }
   }
 }
 
@@ -116,7 +119,7 @@ const logFeed = async () => {
         amount: feedAmountInput.value
       })
       feedAmountInput.value = null
-      selectedBaby.value.feeds = await fetchFeeds(selectedBaby.value.id)
+      await fetchFeeds()
     } catch (error) {
       console.error('Error logging feed:', error)
     }
@@ -127,7 +130,7 @@ const deleteFeed = async (feedId) => {
   if (selectedBaby.value !== null) {
     try {
       await axios.delete(`${serverUrl}/feeds/${feedId}`)
-      selectedBaby.value.feeds = await fetchFeeds(selectedBaby.value.id)
+      await fetchFeeds()
     } catch (error) {
       console.error('Error deleting feed:', error)
     }
@@ -168,14 +171,11 @@ const totalDailyRequirement = computed(() => {
 })
 
 const amountFedToday = computed(() => {
-  if (selectedBaby.value) {
-    const midnight = new Date()
-    midnight.setHours(0, 0, 0, 0)
-    return selectedBaby.value.feeds
-      .filter((feed) => new Date(feed.timestamp) >= midnight)
-      .reduce((total, feed) => total + feed.amount, 0)
-  }
-  return 0
+  const midnight = new Date()
+  midnight.setHours(0, 0, 0, 0)
+  return feeds.value
+    .filter((feed) => new Date(feed.timestamp) >= midnight)
+    .reduce((total, feed) => total + feed.amount, 0)
 })
 
 const amountNeededForRestOfDay = ref(0)
