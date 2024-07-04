@@ -179,11 +179,11 @@ const amountNeededUntilNow = computed(() => {
   const midnight = new Date()
   midnight.setHours(0, 0, 0, 0)
   const hoursPassed = (now - midnight) / (1000 * 60 * 60)
-  return Math.round(totalDailyRequirement.value * (hoursPassed / 24))
+  return Math.round(totalDailyRequirement.value * (hoursPassed / 24)) - amountFedToday.value
 })
 
 const amountNeededForRestOfDay = computed(() => {
-  return totalDailyRequirement.value - amountNeededUntilNow.value
+  return totalDailyRequirement.value - amountFedToday.value
 })
 
 watch([totalDailyRequirement, amountFedToday], () => {
