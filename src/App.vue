@@ -25,12 +25,8 @@
       </div>
       <div>
         <label for="baby-weight-update">Update Weight (grams):</label>
-        <input
-          type="number"
-          v-model.number="selectedBaby.weight"
-          id="baby-weight-update"
-          @change="updateBabyWeight"
-        />
+        <input type="number" v-model.number="selectedBaby.weight" id="baby-weight-update" />
+        <button @click="updateBabyWeight">Update Weight</button>
       </div>
       <div>
         <label for="feed-amount">Feed Amount (ml):</label>
@@ -140,8 +136,7 @@ const deleteFeed = async (feedId) => {
 const updateBabyWeight = async () => {
   if (selectedBaby.value !== null) {
     try {
-      await axios.post(`${serverUrl}/babies`, {
-        id: selectedBaby.value.id,
+      await axios.put(`${serverUrl}/babies/${selectedBaby.value.id}`, {
         weight: selectedBaby.value.weight
       })
       await fetchBabies()
