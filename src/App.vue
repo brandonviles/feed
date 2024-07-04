@@ -18,6 +18,12 @@
     <div v-if="selectedBaby">
       <h2>{{ selectedBaby.name }}</h2>
       <div>
+        <h3>Daily Summary</h3>
+        <p>Total Daily Requirement: {{ totalDailyRequirement }} ml</p>
+        <p>Amount Fed Today: {{ amountFedToday }} ml</p>
+        <p>Amount Needed for Rest of the Day: {{ amountNeededForRestOfDay }} ml</p>
+      </div>
+      <div>
         <label for="baby-weight-update">Update Weight (grams):</label>
         <input
           type="number"
@@ -39,12 +45,6 @@
             <button @click="deleteFeed(feed.id)">Delete</button>
           </li>
         </ul>
-      </div>
-      <div>
-        <h3>Daily Summary</h3>
-        <p>Total Daily Requirement: {{ totalDailyRequirement }} ml</p>
-        <p>Amount Fed Today: {{ amountFedToday }} ml</p>
-        <p>Amount Needed for Rest of the Day: {{ amountNeededForRestOfDay }} ml</p>
       </div>
     </div>
   </div>
@@ -165,7 +165,7 @@ const deleteSelectedBaby = async () => {
 
 const totalDailyRequirement = computed(() => {
   if (selectedBaby.value) {
-    return Math.round((((selectedBaby.value.weight / 1000) * 120) / 20) * (1 / 0.033814))
+    return Math.round((((selectedBaby.value.weight / 1000) * 120) / 20) * 29.5735) // 20 calories per ounce, 1 ounce = 29.5735 ml
   }
   return 0
 })
