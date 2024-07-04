@@ -21,6 +21,7 @@
         <h3>Daily Summary</h3>
         <p>Total Daily Requirement: {{ totalDailyRequirement }} ml</p>
         <p>Amount Fed Today: {{ amountFedToday }} ml</p>
+        <p>Amount Needed Up Until Now: {{ amountNeededUntilNow }} ml</p>
         <p>Amount Needed for Rest of the Day: {{ amountNeededForRestOfDay }} ml</p>
       </div>
       <div>
@@ -173,19 +174,16 @@ const amountFedToday = computed(() => {
     .reduce((total, feed) => total + feed.amount, 0)
 })
 
-const amountNeededForRestOfDay = ref(0)
+const amountNeededUntilNow = computed(() => {
+  const now = new Date()
+  const midnight = new Date()
+  midnight.setHours(0, 0, 0, 0)
+  const hoursPassed = (now - midnight) / (1000 * 60 * 60)
+  return Math.round(totalDailyRequirement.value * (hoursPassed / 24))
+})
 
-const updateAmountNeededForRestOfDay = () => {
-  amountNeededForRestOfDay.value = totalDailyRequirement.value - amountFedToday.value
-}
-
-watch([totalDailyRequirement, amountFedToday], updateAmountNeededForRestOfDay)
-
-onMounted(async () => {
-  await fetchBabies()
-  updateAmountNeededForRestOfDay()
-  const interval = setInterval(updateAmountNeededForRestOfDay, 60000) // Update every minute
-  onUnmounted(() => clearInterval(interval))
+const amountNeededForRestOfDay = computed(() => {
+  return totalDailyRequirement.value - amountNeededUntilNow.value
 })
 </script>
 
