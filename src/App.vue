@@ -185,6 +185,21 @@ const amountNeededUntilNow = computed(() => {
 const amountNeededForRestOfDay = computed(() => {
   return totalDailyRequirement.value - amountNeededUntilNow.value
 })
+
+watch([totalDailyRequirement, amountFedToday], () => {
+  updateAmountNeededForRestOfDay()
+  updateAmountNeededUntilNow()
+})
+
+onMounted(async () => {
+  await fetchBabies()
+  updateAmountNeededForRestOfDay()
+  const interval = setInterval(() => {
+    updateAmountNeededForRestOfDay()
+    updateAmountNeededUntilNow()
+  }, 60000) // Update every minute
+  onUnmounted(() => clearInterval(interval))
+})
 </script>
 
 <style scoped>
