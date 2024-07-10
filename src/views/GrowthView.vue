@@ -2,10 +2,10 @@
   <div>
     <div class="min-w-0 flex-1">
       <h2
-        v-if="baby"
+        v-if="selectedBaby"
         class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight"
       >
-        {{ baby.name }}'s Dashboard
+        {{ selectedBaby.name }}'s Growth
       </h2>
     </div>
 
@@ -19,7 +19,7 @@
           >
             <div class="flex-1 truncate px-4 py-2 text-sm">
               <a href="#" class="font-medium text-gray-900 hover:text-gray-600">Today's Goal</a>
-              <p class="text-gray-500">{{ totalDailyRequirement }} ml</p>
+              <p class="text-gray-500">TODO</p>
             </div>
             <div class="flex-shrink-0 pr-2">
               <button
@@ -37,8 +37,10 @@
             class="flex flex-1 items-center justify-between truncate rounded-md border border-gray-200 bg-white"
           >
             <div class="flex-1 truncate px-4 py-2 text-sm">
-              <a href="#" class="font-medium text-gray-900 hover:text-gray-600">Amount fed today</a>
-              <p class="text-gray-500">{{ amountFedToday }} ml</p>
+              <a href="#" class="font-medium text-gray-900 hover:text-gray-600"
+                >Amount weighed today</a
+              >
+              <p class="text-gray-500">TODO</p>
             </div>
             <div class="flex-shrink-0 pr-2">
               <button
@@ -57,7 +59,7 @@
           >
             <div class="flex-1 truncate px-4 py-2 text-sm">
               <a href="#" class="font-medium text-gray-900 hover:text-gray-600">Pace</a>
-              <p class="text-gray-500">{{ amountNeededUntilNow }}</p>
+              <p class="text-gray-500">TODO</p>
             </div>
             <div class="flex-shrink-0 pr-2">
               <button
@@ -76,7 +78,7 @@
     <div class="mt-8">
       <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
-          <h1 class="text-base font-semibold leading-6 text-gray-900">Today's Feeds</h1>
+          <h1 class="text-base font-semibold leading-6 text-gray-900">Today's Weights</h1>
         </div>
         <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <button
@@ -84,7 +86,7 @@
             @click="open = true"
             class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
           >
-            Add feed
+            Add weight
           </button>
         </div>
       </div>
@@ -93,7 +95,7 @@
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-              <table v-if="feeds" class="min-w-full divide-y divide-gray-300">
+              <table v-if="weights" class="min-w-full divide-y divide-gray-300">
                 <thead class="bg-gray-50">
                   <tr>
                     <th
@@ -123,30 +125,30 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
-                  <tr v-for="feed in feeds" :key="feed.id">
+                  <tr v-for="weight in weights" :key="weight.id">
                     <td
                       class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6"
                     >
-                      {{ moment(feed.timestamp).format('LT') }}
+                      {{ moment(weight.timestamp).format('LT') }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {{ feed.amount }}
+                      {{ weight.amount }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {{ feed.amount }}
+                      {{ weight.amount }}
                     </td>
                     <td
                       class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
                     >
                       <a href="#" class="text-indigo-600 hover:text-indigo-900"
-                        >Edit<span class="sr-only">, {{ feed.id }}</span></a
+                        >Edit<span class="sr-only">, {{ weight.id }}</span></a
                       >
                       |
                       <a
-                        @click.prevent="deleteFeed(feed.id)"
+                        @click.prevent="deleteWeight(weight.id)"
                         href="#"
                         class="text-warning hover:text-indigo-900"
-                        >Delete<span class="sr-only">, {{ feed.id }}</span></a
+                        >Delete<span class="sr-only">, {{ weight.id }}</span></a
                       >
                     </td>
                   </tr>
@@ -176,14 +178,14 @@
               >
                 <DialogPanel class="pointer-events-auto w-screen max-w-md">
                   <form
-                    @submit.prevent="logFeed"
+                    @submit.prevent="logWeight"
                     class="flex h-full flex-col divide-y divide-gray-200 bg-white shadow-xl"
                   >
                     <div class="h-0 flex-1 overflow-y-auto">
                       <div class="bg-indigo-700 px-4 py-6 sm:px-6">
                         <div class="flex items-center justify-between">
                           <DialogTitle class="text-base font-semibold leading-6 text-white"
-                            >Add Feed</DialogTitle
+                            >Add Weight</DialogTitle
                           >
                           <div class="ml-3 flex h-7 items-center">
                             <button
@@ -198,7 +200,7 @@
                           </div>
                         </div>
                         <div class="mt-1">
-                          <p class="text-sm text-indigo-300">Enter a new feed.</p>
+                          <p class="text-sm text-indigo-300">Enter a new weight.</p>
                         </div>
                       </div>
                       <div class="flex flex-1 flex-col justify-between">
@@ -240,11 +242,11 @@
                               <label
                                 for="description"
                                 class="block text-sm font-medium leading-6 text-gray-900"
-                                >Feed amount (ml):</label
+                                >Weight amount (ml):</label
                               >
                               <div class="mt-2">
                                 <input
-                                  v-model="feedAmountInput"
+                                  v-model="weightAmountInput"
                                   type="text"
                                   name="project-name"
                                   id="project-name"
@@ -288,7 +290,7 @@ const moment = inject('moment')
 
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid'
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
@@ -296,12 +298,29 @@ import { XMarkIcon } from '@heroicons/vue/24/outline'
 
 const open = ref(false)
 
+import { useBabyStore } from '@/stores/babyStore'
+import { useGrowthStore } from '@/stores/growthStore'
+
+const babyStore = useBabyStore()
+const growthStore = useGrowthStore()
+
+const selectedBaby = computed(() => babyStore.selectedBaby)
+const weights = computed(() => growthStore.weights)
+
+const fetchWeights = async () => {
+  if (selectedBaby.value) {
+    await growthStore.fetchWeights(selectedBaby.value.id)
+  }
+}
+
+// Watch the selectedBaby computed property and fetch weights accordingly
+watch(selectedBaby, fetchWeights, { immediate: true })
+
 const newBabyName = ref('')
 const newBabyWeight = ref(null)
-const feedAmountInput = ref(null)
-const feedsSinceMidnight = ref([])
+const weightAmountInput = ref(null)
+const weightsSinceMidnight = ref([])
 const babies = ref([])
-const feeds = ref([])
 
 const serverUrl = 'https://baby-feeding-tracker.onrender.com/api'
 
@@ -325,22 +344,22 @@ const timeString = ref(
 const todayMidnight = new Date()
 todayMidnight.setHours(0, 0, 0, 0)
 
-const fetchFeeds = async () => {
-  if (baby.value) {
-    try {
-      const response = await axios.get(`${serverUrl}/feeds/${baby.value.id}`)
-      console.log('Fetched feeds:', response.data) // Debugging log
-      feedsSinceMidnight.value = response.data.filter(
-        (feed) => new Date(feed.timestamp) > todayMidnight
-      )
+// const fetchWeights = async () => {
+//   if (baby.value) {
+//     try {
+//       const response = await axios.get(`${serverUrl}/weights/${selectedBaby.value.id}`)
+//       console.log('Fetched weights:', response.data) // Debugging log
+//       weightsSinceMidnight.value = response.data.filter(
+//         (weight) => new Date(weight.timestamp) > todayMidnight
+//       )
 
-      feeds.value = feedsSinceMidnight.value
-    } catch (error) {
-      console.error('Error fetching feeds:', error)
-      feeds.value = []
-    }
-  }
-}
+//       weights.value = weightsSinceMidnight.value
+//     } catch (error) {
+//       console.error('Error fetching weights:', error)
+//       weights.value = []
+//     }
+//   }
+// }
 
 const addBaby = async () => {
   if (newBabyName.value && newBabyWeight.value) {
@@ -358,28 +377,29 @@ const addBaby = async () => {
   }
 }
 
-const logFeed = async () => {
-  if (baby.value !== null && feedAmountInput.value) {
+const logWeight = async () => {
+  if (selectedBaby.value !== null && weightAmountInput.value) {
     try {
-      await axios.post(`${serverUrl}/feeds`, {
-        baby_id: baby.value.id,
-        amount: feedAmountInput.value
+      await axios.post(`${serverUrl}/weights`, {
+        baby_id: selectedBaby.value.id,
+        amount: weightAmountInput.value
       })
-      feedAmountInput.value = null
-      await fetchFeeds()
+      weightAmountInput.value = null
+      open.value = false
+      await fetchWeights()
     } catch (error) {
-      console.error('Error logging feed:', error)
+      console.error('Error logging weight:', error)
     }
   }
 }
 
-const deleteFeed = async (feedId) => {
-  if (baby.value !== null) {
+const deleteWeight = async (weightId) => {
+  if (selectedBaby.value !== null) {
     try {
-      await axios.delete(`${serverUrl}/feeds/${feedId}`)
-      await fetchFeeds()
+      await axios.delete(`${serverUrl}/weights/${weightId}`)
+      await fetchWeights()
     } catch (error) {
-      console.error('Error deleting feed:', error)
+      console.error('Error deleting weight:', error)
     }
   }
 }
@@ -410,38 +430,38 @@ const deletebaby = async () => {
 }
 
 const totalDailyRequirement = computed(() => {
-  if (baby.value) {
-    return Math.round((((baby.value.weight / 1000) * 120) / 20) * 29.5735) // 20 calories per ounce, 1 ounce = 29.5735 ml
+  if (selectedBaby.value) {
+    return Math.round((((selectedBaby.value.weight / 1000) * 120) / 20) * 29.5735) // 20 calories per ounce, 1 ounce = 29.5735 ml
   }
   return 0
 })
 
-const amountFedToday = computed(() => {
-  const midnight = new Date()
-  midnight.setHours(0, 0, 0, 0)
-  return feeds.value
-    .filter((feed) => new Date(feed.timestamp) >= midnight)
-    .reduce((total, feed) => total + feed.amount, 0)
-})
+// const amountWeighedToday = computed(() => {
+//   const midnight = new Date()
+//   midnight.setHours(0, 0, 0, 0)
+//   return weights.value
+//     .filter((weight) => new Date(weight.timestamp) >= midnight)
+//     .reduce((total, weight) => total + weight.amount, 0)
+// })
 
-const amountNeededUntilNow = computed(() => {
-  const now = new Date()
-  const midnight = new Date()
-  midnight.setHours(0, 0, 0, 0)
-  const hoursPassed = (now - midnight) / (1000 * 60 * 60)
-  const pace = Math.round(totalDailyRequirement.value * (hoursPassed / 24)) - amountFedToday.value
-  if (pace < 0) {
-    return `${Math.abs(pace)} ml ahead`
-  } else if (pace > 0) {
-    return `${pace} ml behind`
-  } else {
-    return 'On pace'
-  }
-})
+// const amountNeededUntilNow = computed(() => {
+//   const now = new Date()
+//   const midnight = new Date()
+//   midnight.setHours(0, 0, 0, 0)
+//   const hoursPassed = (now - midnight) / (1000 * 60 * 60)
+//   const pace = Math.round(totalDailyRequirement.value * (hoursPassed / 24)) - amountWeighedToday.value
+//   if (pace < 0) {
+//     return `${Math.abs(pace)} ml ahead`
+//   } else if (pace > 0) {
+//     return `${pace} ml behind`
+//   } else {
+//     return 'On pace'
+//   }
+// })
 
-const amountNeededForRestOfDay = computed(() => {
-  return totalDailyRequirement.value - amountFedToday.value
-})
+// const amountNeededForRestOfDay = computed(() => {
+//   return totalDailyRequirement.value - amountWeighedToday.value
+// })
 
 import { useRoute } from 'vue-router'
 
@@ -449,16 +469,4 @@ const route = useRoute()
 const babyId = route.params.id
 
 let baby = ref(null)
-
-const fetchBaby = async () => {
-  const response = await axios.get(`${serverUrl}/babies/${babyId}`)
-  baby.value = response.data
-  fetchFeeds()
-}
-
-const pages = [{ name: 'Nutrition', href: '/feed/babies', current: true }]
-
-onMounted(async () => {
-  await fetchBaby()
-})
 </script>

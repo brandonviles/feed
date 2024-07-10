@@ -2,10 +2,10 @@
   <div>
     <div class="min-w-0 flex-1">
       <h2
-        v-if="baby"
+        v-if="selectedBaby"
         class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight"
       >
-        {{ baby.name }}'s Dashboard
+        {{ selectedBaby.name }}'s Nutrition
       </h2>
     </div>
 
@@ -288,7 +288,7 @@ const moment = inject('moment')
 
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid'
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
@@ -296,12 +296,29 @@ import { XMarkIcon } from '@heroicons/vue/24/outline'
 
 const open = ref(false)
 
+import { useBabyStore } from '@/stores/babyStore'
+import { useFeedStore } from '@/stores/feedStore'
+
+const babyStore = useBabyStore()
+const feedStore = useFeedStore()
+
+const selectedBaby = computed(() => babyStore.selectedBaby)
+const feeds = computed(() => feedStore.feedsSinceMidnight)
+
+const fetchFeeds = async () => {
+  if (selectedBaby.value) {
+    await feedStore.fetchFeeds(selectedBaby.value.id)
+  }
+}
+
+// Watch the selectedBaby computed property and fetch feeds accordingly
+watch(selectedBaby, fetchFeeds, { immediate: true })
+
 const newBabyName = ref('')
 const newBabyWeight = ref(null)
 const feedAmountInput = ref(null)
 const feedsSinceMidnight = ref([])
 const babies = ref([])
-const feeds = ref([])
 
 const serverUrl = 'https://baby-feeding-tracker.onrender.com/api'
 
@@ -325,22 +342,22 @@ const timeString = ref(
 const todayMidnight = new Date()
 todayMidnight.setHours(0, 0, 0, 0)
 
-const fetchFeeds = async () => {
-  if (baby.value) {
-    try {
-      const response = await axios.get(`${serverUrl}/feeds/${baby.value.id}`)
-      console.log('Fetched feeds:', response.data) // Debugging log
-      feedsSinceMidnight.value = response.data.filter(
-        (feed) => new Date(feed.timestamp) > todayMidnight
-      )
+// const fetchFeeds = async () => {
+//   if (baby.value) {
+//     try {
+//       const response = await axios.get(`${serverUrl}/feeds/${selectedBaby.value.id}`)
+//       console.log('Fetched feeds:', response.data) // Debugging log
+//       feedsSinceMidnight.value = response.data.filter(
+//         (feed) => new Date(feed.timestamp) > todayMidnight
+//       )
 
-      feeds.value = feedsSinceMidnight.value
-    } catch (error) {
-      console.error('Error fetching feeds:', error)
-      feeds.value = []
-    }
-  }
-}
+//       feeds.value = feedsSinceMidnight.value
+//     } catch (error) {
+//       console.error('Error fetching feeds:', error)
+//       feeds.value = []
+//     }
+//   }
+// }
 
 const addBaby = async () => {
   if (newBabyName.value && newBabyWeight.value) {
@@ -359,13 +376,14 @@ const addBaby = async () => {
 }
 
 const logFeed = async () => {
-  if (baby.value !== null && feedAmountInput.value) {
+  if (selectedBaby.value !== null && feedAmountInput.value) {
     try {
       await axios.post(`${serverUrl}/feeds`, {
-        baby_id: baby.value.id,
+        baby_id: selectedBaby.value.id,
         amount: feedAmountInput.value
       })
       feedAmountInput.value = null
+      open.value = false
       await fetchFeeds()
     } catch (error) {
       console.error('Error logging feed:', error)
@@ -374,7 +392,7 @@ const logFeed = async () => {
 }
 
 const deleteFeed = async (feedId) => {
-  if (baby.value !== null) {
+  if (selectedBaby.value !== null) {
     try {
       await axios.delete(`${serverUrl}/feeds/${feedId}`)
       await fetchFeeds()
@@ -410,8 +428,8 @@ const deletebaby = async () => {
 }
 
 const totalDailyRequirement = computed(() => {
-  if (baby.value) {
-    return Math.round((((baby.value.weight / 1000) * 120) / 20) * 29.5735) // 20 calories per ounce, 1 ounce = 29.5735 ml
+  if (selectedBaby.value) {
+    return Math.round((((selectedBaby.value.weight / 1000) * 120) / 20) * 29.5735) // 20 calories per ounce, 1 ounce = 29.5735 ml
   }
   return 0
 })
@@ -452,8 +470,10 @@ let baby = ref(null)
 
 const fetchBaby = async () => {
   const response = await axios.get(`${serverUrl}/babies/${babyId}`)
-  baby.value = response.data
-  fetchFeeds()
+  selectedBaby.value = response.data
+  if (selectedBaby.value) {
+    fetchFeeds()
+  }
 }
 
 const pages = [{ name: 'Nutrition', href: '/feed/babies', current: true }]
