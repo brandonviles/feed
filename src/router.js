@@ -5,7 +5,7 @@ import BabyComponent from './components/BabyComponent.vue'
 import DashboardView from './views/DashboardView.vue'
 
 const routes = [
-  { path: '/baby/:id/', component: BabiesComponent },
+  { path: '/', component: BabyComponent },
   { name: 'dashboard', path: '/baby/:id/dashboard', component: DashboardView },
 
   { name: 'nutrition', path: '/baby/:id/nutrition', component: BabyComponent }// dynamic route
