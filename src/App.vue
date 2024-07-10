@@ -1,253 +1,263 @@
+<!--
+  This example requires some changes to your config:
+  
+  ```
+  // tailwind.config.js
+  module.exports = {
+    // ...
+    plugins: [
+      // ...
+      require('@tailwindcss/forms'),
+    ],
+  }
+  ```
+-->
 <template>
-  <div id="app">
-    <h1>Baby Feeding Tracker</h1>
-    <div>
-      <label for="baby-name">Baby Name:</label>
-      <input v-model="newBabyName" id="baby-name" />
-      <label for="baby-weight">Baby Weight (grams):</label>
-      <input type="number" v-model.number="newBabyWeight" id="baby-weight" />
-      <button @click="addBaby">Add Baby</button>
+  <!--
+    This example requires updating your template:
+
+    ```
+    <html class="h-full bg-white">
+    <body class="h-full">
+    ```
+  -->
+  <div>
+    <TransitionRoot as="template" :show="sidebarOpen">
+      <Dialog class="relative z-50 lg:hidden" @close="sidebarOpen = false">
+        <TransitionChild as="template" enter="transition-opacity ease-linear duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="transition-opacity ease-linear duration-300" leave-from="opacity-100" leave-to="opacity-0">
+          <div class="fixed inset-0 bg-gray-900/80" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 flex">
+          <TransitionChild as="template" enter="transition ease-in-out duration-300 transform" enter-from="-translate-x-full" enter-to="translate-x-0" leave="transition ease-in-out duration-300 transform" leave-from="translate-x-0" leave-to="-translate-x-full">
+            <DialogPanel class="relative mr-16 flex w-full max-w-xs flex-1">
+              <TransitionChild as="template" enter="ease-in-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in-out duration-300" leave-from="opacity-100" leave-to="opacity-0">
+                <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
+                  <button type="button" class="-m-2.5 p-2.5" @click="sidebarOpen = false">
+                    <span class="sr-only">Close sidebar</span>
+                    <XMarkIcon class="h-6 w-6 text-white" aria-hidden="true" />
+                  </button>
+                </div>
+              </TransitionChild>
+              <!-- Sidebar component, swap this element with another sidebar if you like -->
+              <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
+                <div class="flex h-16 shrink-0 items-center">
+                  <img class="h-8 w-auto" src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company" />
+                </div>
+                <nav class="flex flex-1 flex-col">
+                  <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                    <li>
+                      <ul role="list" class="-mx-2 space-y-1">
+                        <li v-for="item in navigation" :key="item.name">
+                          <a :href="item.href" :class="[item.current ? 'bg-gray-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600', 'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6']">
+                            <component :is="item.icon" :class="[item.current ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600', 'h-6 w-6 shrink-0']" aria-hidden="true" />
+                            {{ item.name }}
+                          </a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li class="mt-auto">
+                      <a href="#" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600">
+                        <Cog6ToothIcon class="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600" aria-hidden="true" />
+                        Settings
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+
+    <!-- Static sidebar for desktop -->
+    <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+      <!-- Sidebar component, swap this element with another sidebar if you like -->
+      <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
+        <div class="flex h-16 shrink-0 items-center">
+          <img class="h-8 w-auto" src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company" />
+        </div>
+        <nav class="flex flex-1 flex-col">
+          <ul role="list" class="flex flex-1 flex-col gap-y-7">
+            <li>
+              <ul role="list" class="-mx-2 space-y-1">
+                
+                <li>
+                  <router-link :to="{ name: 'dashboard', params: { id: selected.id } }" :class="[router.currentRoute.value.name === 'dashboard' ? 'bg-gray-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600', 'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6']">
+                    <HomeIcon :class="[router.currentRoute.value.name === 'dashboard' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600', 'h-6 w-6 shrink-0']" aria-hidden="true" />
+                    Dashboard
+                  </router-link>
+                </li>
+                <li>
+                  <router-link :to="{ name: 'nutrition', params: { id: selected.id } }" :class="[router.currentRoute.value.name === 'nutrition' ? 'bg-gray-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600', 'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6']">
+                    <UsersIcon :class="[router.currentRoute.value.name === 'nutrition' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600', 'h-6 w-6 shrink-0']" aria-hidden="true" />
+                    Nutrition
+                  </router-link>
+                </li>
+              </ul>
+            </li>
+            
+            <li class="mt-auto">
+              <a href="#" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600">
+                <Cog6ToothIcon class="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600" aria-hidden="true" />
+                Settings
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
     </div>
-    <div v-if="babies.length > 0">
-      <label for="selectedBaby">Select Baby:</label>
-      <select v-model="selectedBabyIndex" @change="fetchFeeds">
-        <option v-for="(baby, index) in babies" :key="index" :value="index">{{ baby.name }}</option>
-      </select>
-      <button @click="deleteSelectedBaby">Delete Selected Baby</button>
-    </div>
-    <div v-if="selectedBaby">
-      <h2>{{ selectedBaby.name }}</h2>
-      <div>
-        <h3>Daily Summary</h3>
-        <p>Total Daily Requirement: {{ totalDailyRequirement }} ml</p>
-        <p>Amount Fed Today: {{ amountFedToday }} ml</p>
-        <p>Amount Needed Up Until Now: {{ amountNeededUntilNow }} ml</p>
-        <p>Amount Needed for Rest of the Day: {{ amountNeededForRestOfDay }} ml</p>
+
+    <div class="lg:pl-72">
+      <div class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <button type="button" class="-m-2.5 p-2.5 text-gray-700 lg:hidden" @click="sidebarOpen = true">
+          <span class="sr-only">Open sidebar</span>
+          <Bars3Icon class="h-6 w-6" aria-hidden="true" />
+        </button>
+
+        <!-- Separator -->
+        <div class="h-6 w-px bg-gray-200 lg:hidden" aria-hidden="true" />
+
+        <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+          <form class="relative flex flex-1" action="#" method="GET">
+            <label for="search-field" class="sr-only">Search</label>
+            <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400" aria-hidden="true" />
+            <input id="search-field" class="block h-full w-full border-0 py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm" placeholder="Search..." type="search" name="search" />
+          </form>
+          <div class="flex items-center gap-x-4 lg:gap-x-6">
+            <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
+              <span class="sr-only">View notifications</span>
+              <BellIcon class="h-6 w-6" aria-hidden="true" />
+            </button>
+
+            <!-- Separator -->
+            <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" aria-hidden="true" />
+
+            <!-- Baby Selection -->
+            <div class="w-32">
+              <Listbox v-if="babies && selected" as="div" v-model="selected" @update:model-value="navigateToBaby(selected.id)">
+                <div class="relative mt-2">
+                  <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 focus:outline-none sm:text-sm sm:leading-6">
+                    <span class="block truncate">{{ selected.name }}</span>
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    </span>
+                  </ListboxButton>
+
+                  <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+                    <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                      <ListboxOption as="template" v-for="baby in babies" :key="baby.id" :value="baby" v-slot="{ active, selected }">
+                        <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
+                          <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ baby.name }}</span>
+
+                          <span v-if="selected" :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                            <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        </li>
+                      </ListboxOption>
+                    </ListboxOptions>
+                  </transition>
+                </div>
+              </Listbox>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <label for="baby-weight-update">Update Weight (grams):</label>
-        <input type="number" v-model.number="selectedBaby.weight" id="baby-weight-update" />
-        <button @click="updateBabyWeight">Update Weight</button>
-      </div>
-      <div>
-        <label for="feed-amount">Feed Amount (ml):</label>
-        <input type="number" v-model.number="feedAmountInput" id="feed-amount" />
-        <button @click="logFeed">Log Feed</button>
-      </div>
-      <div>
-        <h3>Feeds</h3>
-        <ul>
-          <li v-for="(feed, index) in feeds" :key="index">
-            {{ new Date(feed.timestamp).toLocaleString() }}: {{ feed.amount }} ml
-            <button @click="deleteFeed(feed.id)">Delete</button>
-          </li>
-        </ul>
-      </div>
+
+      <main class="py-10">
+        <div class="px-4 sm:px-6 lg:px-8">
+          <RouterView  :key="$route.fullPath" />
+        </div>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router';
+
+import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from '@headlessui/vue'
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+
+
+const selected = ref([])
+
+import {
+  Dialog,
+  DialogPanel,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+  TransitionChild,
+  TransitionRoot,
+} from '@headlessui/vue'
+import {
+  Bars3Icon,
+  BellIcon,
+  CalendarIcon,
+  PresentationChartLineIcon,
+  Cog6ToothIcon,
+  DocumentDuplicateIcon,
+  FolderIcon,
+  HomeIcon,
+  UsersIcon,
+  XMarkIcon,
+} from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
+
+const navigation = [
+  { name: 'Dashboard', href: '#', icon: HomeIcon, current: true },
+  { name: 'Nutrition', href: '#', icon: UsersIcon, current: false },
+  { name: 'Growth', href: '#', icon: PresentationChartLineIcon, current: false },
+  { name: 'Diapers', href: '#', icon: CalendarIcon, current: false },
+]
+
+
+
+const sidebarOpen = ref(false)
+
+
 import axios from 'axios'
-
-const newBabyName = ref('')
-const newBabyWeight = ref(null)
-const selectedBabyIndex = ref(null)
-const feedAmountInput = ref(null)
-const babies = ref([])
-const feeds = ref([])
-
 const serverUrl = 'https://baby-feeding-tracker.onrender.com/api'
 
+
+const babies = ref([])
+const router = useRouter();
 const fetchBabies = async () => {
   try {
     const response = await axios.get(`${serverUrl}/babies`)
     console.log('Fetched babies:', response.data) // Debugging log
     babies.value = response.data
+    console.log('Selected baby:', router.currentRoute.value.params.id)
+    let list = response.data
+    var elementPos = list.map(function(x) {return x.id; }).indexOf(Number(router.currentRoute.value.params.id));
+    console.log('Element position:', elementPos)
+    let selectedBaby = list.find(baby => baby.id == router.currentRoute.value.params.id)
+    if (selectedBaby) {
+      selected.value = babies.value[elementPos]
+      console.log('Selected baby:', selected.value)
+    } else {
+      console.log('No baby found with the given id')
+    }
   } catch (error) {
     console.error('Error fetching babies:', error)
   }
 }
 
-const fetchFeeds = async () => {
-  if (selectedBaby.value) {
-    try {
-      const response = await axios.get(`${serverUrl}/feeds/${selectedBaby.value.id}`)
-      console.log('Fetched feeds:', response.data) // Debugging log
-      feeds.value = response.data
-    } catch (error) {
-      console.error('Error fetching feeds:', error)
-      feeds.value = []
-    }
-  }
-}
 
-const selectedBaby = computed(() => {
-  if (selectedBabyIndex.value !== null) {
-    const baby = babies.value[selectedBabyIndex.value]
-    console.log('Selected baby:', baby) // Debugging log
-    return baby
-  }
-  return null
-})
 
-const addBaby = async () => {
-  if (newBabyName.value && newBabyWeight.value) {
-    try {
-      await axios.post(`${serverUrl}/babies`, {
-        name: newBabyName.value,
-        weight: newBabyWeight.value
-      })
-      newBabyName.value = ''
-      newBabyWeight.value = null
-      await fetchBabies()
-    } catch (error) {
-      console.error('Error adding baby:', error)
-    }
-  }
-}
+const navigateToBaby = (babyId) => {
+  console.log('Navigating to baby:', babyId)
+  router.push({ name: router.currentRoute.value.name, params: { id: babyId } });
+};
 
-const logFeed = async () => {
-  if (selectedBaby.value !== null && feedAmountInput.value) {
-    try {
-      await axios.post(`${serverUrl}/feeds`, {
-        baby_id: selectedBaby.value.id,
-        amount: feedAmountInput.value
-      })
-      feedAmountInput.value = null
-      await fetchFeeds()
-    } catch (error) {
-      console.error('Error logging feed:', error)
-    }
-  }
-}
 
-const deleteFeed = async (feedId) => {
-  if (selectedBaby.value !== null) {
-    try {
-      await axios.delete(`${serverUrl}/feeds/${feedId}`)
-      await fetchFeeds()
-    } catch (error) {
-      console.error('Error deleting feed:', error)
-    }
-  }
-}
 
-const updateBabyWeight = async () => {
-  if (selectedBaby.value !== null) {
-    try {
-      await axios.put(`${serverUrl}/babies/${selectedBaby.value.id}`, {
-        weight: selectedBaby.value.weight
-      })
-      await fetchBabies()
-    } catch (error) {
-      console.error('Error updating baby weight:', error)
-    }
-  }
-}
-
-const deleteSelectedBaby = async () => {
-  if (selectedBaby.value !== null) {
-    try {
-      await axios.delete(`${serverUrl}/babies/${selectedBaby.value.id}`)
-      selectedBabyIndex.value = null
-      await fetchBabies()
-    } catch (error) {
-      console.error('Error deleting baby:', error)
-    }
-  }
-}
-
-const totalDailyRequirement = computed(() => {
-  if (selectedBaby.value) {
-    return Math.round((((selectedBaby.value.weight / 1000) * 120) / 20) * 29.5735) // 20 calories per ounce, 1 ounce = 29.5735 ml
-  }
-  return 0
-})
-
-const amountFedToday = computed(() => {
-  const midnight = new Date()
-  midnight.setHours(0, 0, 0, 0)
-  return feeds.value
-    .filter((feed) => new Date(feed.timestamp) >= midnight)
-    .reduce((total, feed) => total + feed.amount, 0)
-})
-
-const amountNeededUntilNow = computed(() => {
-  const now = new Date()
-  const midnight = new Date()
-  midnight.setHours(0, 0, 0, 0)
-  const hoursPassed = (now - midnight) / (1000 * 60 * 60)
-  return Math.round(totalDailyRequirement.value * (hoursPassed / 24)) - amountFedToday.value
-})
-
-const amountNeededForRestOfDay = computed(() => {
-  return totalDailyRequirement.value - amountFedToday.value
-})
-
-watch([totalDailyRequirement, amountFedToday], () => {
-  updateAmountNeededForRestOfDay()
-  updateAmountNeededUntilNow()
-})
 
 onMounted(async () => {
   await fetchBabies()
-  updateAmountNeededForRestOfDay()
-  const interval = setInterval(() => {
-    updateAmountNeededForRestOfDay()
-    updateAmountNeededUntilNow()
-  }, 60000) // Update every minute
-  onUnmounted(() => clearInterval(interval))
 })
 </script>
-
-<style scoped>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  margin-top: 60px;
-}
-
-div {
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-input,
-select {
-  padding: 5px;
-  width: 100%;
-  max-width: 300px;
-  box-sizing: border-box;
-}
-
-button {
-  padding: 10px 20px;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-button:hover {
-  background-color: #369c77;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  text-align: left;
-  margin-bottom: 10px;
-}
-</style>
