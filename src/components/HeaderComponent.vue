@@ -53,33 +53,83 @@
                 <ul role="list" class="flex flex-1 flex-col gap-y-7">
                   <li>
                     <ul role="list" class="-mx-2 space-y-1">
-                      <li v-for="item in navigation" :key="item.name">
-                        <a
-                          :href="item.href"
+                      <li>
+                        <RouterLink
+                        @click="sidebarOpen = false"
+                        :to="{ name: 'dashboard', params: { id: selectedBaby.id } }"
                           :class="[
-                            item.current
+                            router.currentRoute.value.name === 'dashboard'
                               ? 'bg-gray-50 text-indigo-600'
                               : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600',
                             'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6'
                           ]"
                         >
                           <component
-                            :is="item.icon"
+                            :is="HomeIcon"
                             :class="[
-                              item.current
+                              router.currentRoute.value.name === 'dashboard'
                                 ? 'text-indigo-600'
                                 : 'text-gray-400 group-hover:text-indigo-600',
                               'h-6 w-6 shrink-0'
                             ]"
                             aria-hidden="true"
                           />
-                          {{ item.name }}
-                        </a>
+                          Dashboard
+                        </RouterLink>
+                      </li>
+                      <li>
+                        <RouterLink
+                        @click="sidebarOpen = false"
+                        :to="{ name: 'nutrition', params: { id: selectedBaby.id } }"
+                          :class="[
+                            router.currentRoute.value.name === 'nutrition'
+                              ? 'bg-gray-50 text-indigo-600'
+                              : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600',
+                            'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6'
+                          ]"
+                        >
+                          <component
+                            :is="HomeIcon"
+                            :class="[
+                              router.currentRoute.value.name === 'nutrition'
+                                ? 'text-indigo-600'
+                                : 'text-gray-400 group-hover:text-indigo-600',
+                              'h-6 w-6 shrink-0'
+                            ]"
+                            aria-hidden="true"
+                          />
+                          Nutrition
+                        </RouterLink>
+                      </li>
+                      <li>
+                        <RouterLink
+                        @click="sidebarOpen = false"
+                        :to="{ name: 'growth', params: { id: selectedBaby.id } }"
+                          :class="[
+                            router.currentRoute.value.name === 'growth'
+                              ? 'bg-gray-50 text-indigo-600'
+                              : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600',
+                            'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6'
+                          ]"
+                        >
+                          <component
+                            :is="HomeIcon"
+                            :class="[
+                              router.currentRoute.value.name === 'growth'
+                                ? 'text-indigo-600'
+                                : 'text-gray-400 group-hover:text-indigo-600',
+                              'h-6 w-6 shrink-0'
+                            ]"
+                            aria-hidden="true"
+                          />
+                          Growth
+                        </RouterLink>
                       </li>
                     </ul>
                   </li>
                   <li class="mt-auto">
                     <a
+                    @click="sidebarOpen = false"
                       href="#"
                       class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
                     >
@@ -143,7 +193,7 @@
 
 <script setup>
 import BabySelector from '../components/BabySelector.vue'
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { TransitionRoot, TransitionChild } from '@headlessui/vue'
 import { Dialog, DialogPanel } from '@headlessui/vue'
@@ -158,17 +208,13 @@ import {
   XMarkIcon
 } from '@heroicons/vue/24/outline'
 
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue'
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
-
-const navigation = [
-  { name: 'Dashboard', href: '#', icon: HomeIcon, current: true },
-  { name: 'Nutrition', href: '#', icon: UsersIcon, current: false },
-  { name: 'Growth', href: '#', icon: PresentationChartLineIcon, current: false },
-  { name: 'Diapers', href: '#', icon: CalendarIcon, current: false }
-]
 
 const selected = ref([])
+
+import { useBabyStore } from '@/stores/babyStore'
+const babyStore = useBabyStore()
+
+const selectedBaby = computed(() => babyStore.selectedBaby)
 
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 

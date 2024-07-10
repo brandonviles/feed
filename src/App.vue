@@ -170,7 +170,7 @@
     </div>
 
     <div class="lg:pl-72">
-      <HeaderComponent :navigation="navigation" :sidebarOpen="sidebarOpen" />
+      <HeaderComponent :sidebarOpen="sidebarOpen" />
 
       <main class="py-10">
         <div class="px-4 sm:px-6 lg:px-8">
